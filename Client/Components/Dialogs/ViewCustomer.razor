@@ -1,0 +1,39 @@
+﻿@using SetValues.Contracts.Models.Responses
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Outlined.RemoveRedEye" Class="mr-3 mb-n1"/>
+            View Customer
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Model">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField ReadOnly="true" For="@(() => Model.Id)" Value="Model.Id" Label="Id"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField ReadOnly="true" For="@(() => Model.FirstName)" Value="Model.FirstName" Immediate="true" Label="First Name"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField ReadOnly="true" For="@(() => Model.LastName)" Value="Model.LastName" Immediate="true" Label="Last Name"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField ReadOnly="true" Value="Model.Email" For="@(() => Model.Email)" Immediate="true" Label="Email"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField ReadOnly="true" Value="Model.Number" For="@(() => Model.Number)" Immediate="true" Label="House Number"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField ReadOnly="true" Value="Model.Street" For="@(() => Model.Street)" Immediate="true" Label="Street"/>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+
+    [Parameter] public GetAllPagedCustomersResponse Model { get; set; } = new();
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+}

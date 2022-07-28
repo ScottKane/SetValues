@@ -1,0 +1,229 @@
+﻿@page "/"
+@using System.Text.Json
+@using SetValues.Contracts.Models.Requests
+@using SetValues.Contracts.Models.Responses
+@using SetValues.Contracts.Services
+
+<PageTitle>SetValues - Customers</PageTitle>
+<Hero Title="Customers" />
+@if (!_loaded)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+}
+else
+{
+    <MudTable Elevation="25" ServerData="@(new Func<TableState, Task<TableData<GetAllPagedCustomersResponse>>>(ServerReload))" Hover="true" @ref="_table">
+        <ToolBarContent>
+            <div class="justify-center mud-text-align-center">
+                <MudButton DisableElevation Class="mr-1" Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => ShowAddEditCustomerDialog())" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface">Create</MudButton>
+                <MudButton DisableElevation Variant="Variant.Filled" OnClick="@(() => OnSearch(string.Empty))" StartIcon="@Icons.Material.Filled.Refresh" IconColor="Color.Surface" Color="Color.Secondary">Reload</MudButton>
+            </div>
+            <MudSpacer/>
+            <MudTextField T="string" Value="_searchString" ValueChanged="@(OnSearch)" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel T="GetAllPagedCustomersResponse" SortLabel="Id">Id</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="GetAllPagedCustomersResponse" SortLabel="FirstName">First Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="GetAllPagedCustomersResponse" SortLabel="LastName">Last Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="GetAllPagedCustomersResponse" SortLabel="Email">Email</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="GetAllPagedCustomersResponse" SortLabel="House Number">House Number</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="GetAllPagedCustomersResponse" SortLabel="Street">Street</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="text-align: right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">
+                <MudHighlighter Text="@context.Id.ToString()" HighlightedText="@_searchString"/>
+            </MudTd>
+            <MudTd DataLabel="First Name">
+                <MudHighlighter Text="@context.FirstName" HighlightedText="@_searchString"/>
+            </MudTd>
+            <MudTd DataLabel="Last Name">
+                <MudHighlighter Text="@context.LastName" HighlightedText="@_searchString"/>
+            </MudTd>
+            <MudTd DataLabel="Email">
+                <MudHighlighter Text="@context.Email" HighlightedText="@_searchString"/>
+            </MudTd>
+            <MudTd DataLabel="House Number">
+                <MudHighlighter Text="@context.Number" HighlightedText="@_searchString"/>
+            </MudTd>
+            <MudTd DataLabel="Street">
+                <MudHighlighter Text="@context.Street" HighlightedText="@_searchString"/>
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align: right">
+                <MudIconButton Color="Color.Primary" Icon="@Icons.Outlined.RemoveRedEye" OnClick="() => ShowViewCustomerDialog(context.Id)" />
+                <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Outlined.Edit" OnClick="() => ShowAddEditCustomerDialog(context.Id)"/>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager/>
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    private string _searchString = "";
+    private int _totalItems;
+    private IEnumerable<GetAllPagedCustomersResponse> _pagedData;
+    private MudTable<GetAllPagedCustomersResponse> _table;
+    private bool _loaded;
+    
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Inject] private ICustomerService CustomerService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(UserId) && _searchString != UserId)
+        {
+            _searchString = UserId;
+        }
+        _loaded = true;
+    }
+    
+    private async Task<TableData<GetAllPagedCustomersResponse>> ServerReload(TableState state)
+    {
+        if (!string.IsNullOrWhiteSpace(_searchString)) state.Page = 0;
+
+        await LoadData(
+            state.Page,
+            state.PageSize,
+            state);
+        Console.WriteLine(JsonSerializer.Serialize(_pagedData));
+        return new TableData<GetAllPagedCustomersResponse> {TotalItems = _totalItems, Items = _pagedData};
+    }
+
+    private async Task LoadData(
+        int pageNumber,
+        int pageSize,
+        TableState state)
+    {
+        string[] orderings = null;
+        if (!string.IsNullOrEmpty(state.SortLabel))
+        {
+            orderings = state.SortDirection != SortDirection.None
+                ? new[]
+                {
+                    $"{state.SortLabel} {state.SortDirection}"
+                }
+                : new[]
+                {
+                    $"{state.SortLabel}"
+                };
+        }
+
+        var query = new GetAllPagedCustomersQuery
+        {
+            PageSize = pageSize,
+            PageNumber = pageNumber + 1,
+            SearchString = _searchString,
+            OrderBy = orderings
+        };
+        var result = await CustomerService.GetAllPaged(query);
+        if (result.Succeeded)
+        {
+            _totalItems = result.TotalCount;
+            _pagedData = result.Data ?? new List<GetAllPagedCustomersResponse>();
+        }
+        else
+        {
+            foreach (var message in result.Messages)
+            {
+                Snackbar.Add(
+                    message,
+                    Severity.Error);
+            }
+        }
+    }
+
+    private void OnSearch(string text)
+    {
+        _searchString = text;
+        _table.ReloadServerData();
+    }
+    
+    private async Task ShowViewCustomerDialog(int id = 0)
+    {
+        if (id == 0)
+        {
+            Snackbar.Add("Customer Id not found.");
+            return;
+        }
+        var parameters = new DialogParameters();
+        var customer = _pagedData.FirstOrDefault(c => c.Id == id);
+        if (customer != null)
+        {
+            parameters.Add(
+                nameof(ViewCustomer.Model),
+                new GetAllPagedCustomersResponse
+                {
+                    Id = customer.Id,
+                    Title = customer.Title,
+                    FirstName = customer.FirstName,
+                    LastName = customer.LastName,
+                    Number = customer.Number,
+                    Street = customer.Street,
+                    Email = customer.Email
+                });
+        }
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            DisableBackdropClick = true
+        };
+        var dialog = DialogService.Show<ViewCustomer>(
+            "Customer",
+            parameters,
+            options);
+        await dialog.Result;
+    }
+    
+    private async Task ShowAddEditCustomerDialog(int id = 0)
+    {
+        var parameters = new DialogParameters();
+        if (id != 0)
+        {
+            var customer = _pagedData.FirstOrDefault(c => c.Id == id);
+            if (customer != null)
+            {
+                parameters.Add(
+                    nameof(AddEditCustomer.Model),
+                    new AddEditCustomerCommand
+                    {
+                        Id = customer.Id,
+                        Title = customer.Title,
+                        FirstName = customer.FirstName,
+                        LastName = customer.LastName,
+                        Number = customer.Number,
+                        Street = customer.Street,
+                        Email = customer.Email
+                    });
+            }
+        }
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            DisableBackdropClick = true
+        };
+        var dialog = DialogService.Show<AddEditCustomer>(
+            "Customer",
+            parameters,
+            options);
+        await dialog.Result;
+        await _table.ReloadServerData();
+    }
+}

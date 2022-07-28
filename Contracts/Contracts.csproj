@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>SetValues.Contracts</RootNamespace>
+        <AssemblyName>SetValues.Contracts</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MediatR.Contracts" Version="1.0.1" />
+        <PackageReference Include="protobuf-net" Version="2.4.6" />
+        <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
+    </ItemGroup>
+
+</Project>

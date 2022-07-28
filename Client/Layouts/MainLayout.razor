@@ -1,0 +1,23 @@
+﻿@using SetValues.Client.Settings
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@ApplicationTheme.Default" IsDarkMode="_isDarkMode" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <TopBar />
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-16 pt-16">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _leftSideBarOpen = true;
+    private bool _isDarkMode;
+
+    private void ToggleLeftSideBar() => _leftSideBarOpen = !_leftSideBarOpen;
+    private void ToggleDarkMode() => _isDarkMode = !_isDarkMode;
+}

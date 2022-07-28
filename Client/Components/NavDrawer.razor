@@ -1,0 +1,9 @@
+<MudDrawer @bind-Open="LeftSideBarOpen" ClipMode="DrawerClipMode.Always" Elevation="1">
+    <MudNavMenu>
+        <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    </MudNavMenu>
+</MudDrawer>
+
+@code {
+    [EditorRequired] [Parameter] public bool LeftSideBarOpen { get; set; }
+}
